@@ -1,35 +1,41 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { Assistant } from "./assistants/googleai.js";
+import { Chat } from "./components/Chat/Chat.jsx";
+import { Controls } from "./components/Controls/Controls.jsx";
+import styles from "./App.module.css";
+
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  const assistant = new Assistant();
+  const [messages, setMessages] = useState([]);
+
+  function addMessage(message) {
+    setMessages((prevMessages) => [...prevMessages, message]);
+  }
+
+  async function handleContentSend(content) {
+    addMessage({ role: "user", content });
+    try {
+      const result = await assistant.chat(content);
+      addMessage({ role: "assistant", content: result });
+    } catch (error) {
+      addMessage({ role: "system", content: "Error: " + error });
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className={styles.App}>
+      <header className={styles.Header}>
+        <img className={styles.Logo} src="/chat-bot.png" alt="logo" />
+        <h2 className={styles.Title}>AI ChatBot</h2>
+      </header>
+      <div className={styles.ChatContainer}>
+        <Chat messages={messages} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      <Controls onSend={handleContentSend} />
+    </div>
+  );
 }
 
-export default App
+export default App;
