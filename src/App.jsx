@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Assistant } from "./assistants/googleai.js";
+import { Assistant } from "./assistants/deepseekai.js";
 import { Chat } from "./components/Chat/Chat.jsx";
 import { Controls } from "./components/Controls/Controls.jsx";
 import { Loader } from "./components/Loader/Loader.jsx";
