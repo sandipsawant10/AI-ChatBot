@@ -19,7 +19,7 @@ export class Assistant {
     }
   }
 
-  async *chatSteam(content) {
+  async *chatStream(content) {
     try {
       const result = await this.#chat.sendMessageStream(content);
 
