@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Assistant } from "./assistants/deepseekai.js";
+import { Assistant as AssistantClass } from "./assistants/deepseekai.js";
 import { Chat } from "./components/Chat/Chat.jsx";
+import { Assistant } from "./components/Assistant/Assistant.jsx";
 import { Controls } from "./components/Controls/Controls.jsx";
 import { Loader } from "./components/Loader/Loader.jsx";
+import { Theme } from "./components/Theme/Theme.jsx";
 import styles from "./App.module.css";
 
+  let assistant;
+
 function App() {
-  const assistant = new Assistant();
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming,setIsStreaming] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false);
 
   function addMessage(message) {
     setMessages((prevMessages) => [...prevMessages, message]);
@@ -29,7 +32,10 @@ function App() {
     addMessage({ role: "user", content });
     setIsLoading(true);
     try {
-      const result = await assistant.chatStream(content);
+      const result = await assistant.chatStream(
+        content,
+        messages.filter(({ role }) => role !== "system"),
+      );
       let isFirstChunk = false;
 
       for await (const chunk of result) {
@@ -37,16 +43,24 @@ function App() {
           isFirstChunk = true;
           addMessage({ role: "assistant", content: "" });
           setIsLoading(false);
-          setIsStreaming(true)
+          setIsStreaming(true);
         }
         updateLastMessageContent(chunk);
       }
       setIsStreaming(false);
     } catch (error) {
-      addMessage({ role: "system", content: "Error: " + error });
+      addMessage({
+        role: "system",
+        content:
+          error?.message ?? "Error occurred while processing your request.",
+      });
       setIsLoading(false);
       setIsStreaming(false);
     }
+  }
+
+  function handleAssistantChange(newAssistant) {
+    assistant = newAssistant;
   }
 
   return (
@@ -59,7 +73,14 @@ function App() {
       <div className={styles.ChatContainer}>
         <Chat messages={messages} />
       </div>
-      <Controls isDisabled={isLoading || isStreaming} onSend={handleContentSend} />
+      <Controls
+        isDisabled={isLoading || isStreaming}
+        onSend={handleContentSend}
+      />
+      <div className={styles.Configuration}>
+      <Assistant onAssistantChange={handleAssistantChange} />
+      <Theme />
+      </div>
     </div>
   );
 }
