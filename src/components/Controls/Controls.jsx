@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import styles from "./Controls.module.css";
 
@@ -35,12 +35,12 @@ export function Controls({ isDisabled = false, onSend }) {
       <div className={styles.TextAreaContainer}>
         <TextareaAutosize
           ref={textareaRef}
-          placeholder="Message AI ChatBot"
           className={styles.TextArea}
           disabled={isDisabled}
+          placeholder="Message AI Chatbot"
           value={content}
           minRows={1}
-          maxRows={6}
+          maxRows={4}
           onChange={handleContentChange}
           onKeyDown={handleEnterPress}
         />

@@ -1,15 +1,18 @@
 # AI ChatBot
 
-A modern, real-time AI chatbot application built with React and Vite, supporting both Google Gemini AI and OpenAI models with streaming responses.
+A modern, real-time AI chatbot application built with React and Vite, supporting multiple AI providers with streaming responses and multi-chat management.
 
 ## Features
 
-- 🤖 **Multiple AI Providers**: Supports both Google Gemini AI and OpenAI
+- 🤖 **Multiple AI Providers**: Supports Google Gemini AI, OpenAI, Anthropic Claude, DeepSeek AI, and X AI
 - 💬 **Real-time Streaming**: See AI responses as they're being generated
-- 📱 **Responsive Design**: Clean, modern UI with modular CSS
+- 📝 **Multi-Chat Management**: Create and switch between multiple chat sessions
 - 🎨 **Markdown Support**: Rich text formatting in chat messages
+- 📱 **Responsive Design**: Clean, modern UI with modular CSS
+- 🎨 **Theme Support**: Light/Dark mode theme switching
+- 📂 **Sidebar Navigation**: Easy navigation between chat sessions
 - ⌨️ **Auto-resizing Input**: Textarea automatically adjusts to content
-- 🔄 **Chat History**: Maintains conversation context
+- 🔄 **Chat History**: Maintains conversation context across sessions
 - ⚡ **Fast Development**: Built with Vite for lightning-fast HMR
 
 ## Tech Stack
@@ -18,10 +21,14 @@ A modern, real-time AI chatbot application built with React and Vite, supporting
 - **Build Tool**: Vite (Rolldown)
 - **AI Services**:
   - Google Generative AI (Gemini 2.0 Flash)
-  - OpenAI (GPT-4o-mini)
+  - OpenAI (GPT-4o-mini and other models)
+  - Anthropic Claude
+  - DeepSeek AI
+  - X AI (Grok)
 - **UI Libraries**:
-  - react-markdown (for rendering formatted responses)
+  - react-markdown v10.1 (for rendering formatted responses)
   - react-textarea-autosize (for dynamic input)
+  - uuid (for unique chat session IDs)
 - **Styling**: CSS Modules
 
 ## Prerequisites
@@ -29,9 +36,12 @@ A modern, real-time AI chatbot application built with React and Vite, supporting
 Before you begin, ensure you have:
 
 - Node.js (v18 or higher)
-- An API key from either:
+- An API key from one or more providers:
   - [Google AI Studio](https://makersuite.google.com/app/apikey) (for Gemini)
   - [OpenAI Platform](https://platform.openai.com/api-keys) (for GPT)
+  - [Anthropic Console](https://console.anthropic.com/) (for Claude)
+  - [DeepSeek Platform](https://platform.deepseek.com/) (for DeepSeek)
+  - [X AI](https://x.ai/) (for Grok)
 
 ## Installation
 
@@ -50,12 +60,17 @@ Before you begin, ensure you have:
 
 3. **Set up environment variables**
 
-   Create a `.env` file in the root directory:
+   Create a `.env` file in the root directory with your API keys:
 
    ```env
    VITE_GOOGLE_AI_API_KEY=your_google_ai_api_key_here
    VITE_OPEN_AI_API_KEY=your_openai_api_key_here
+   VITE_DEEPSEEK_AI_API_KEY=your_deepseek_api_key_here
+   VITE_ANTHROPIC_AI_API_KEY=your_anthropic_api_key_here
+   VITE_X_AI_API_KEY=your_xai_api_key_here
    ```
+
+   **Note**: You only need API keys for the providers you plan to use. The app will dynamically show available providers based on which API keys are configured.
 
 ## Usage
 
@@ -82,23 +97,20 @@ npm run preview
 ### Lint Code
 
 ```bash
-npm run lint
-```
+npm run supports multiple AI providers. You can switch between them using the Assistant selector in the UI. Each provider requires its corresponding API key to be configured in the `.env` file.
 
-## Switching AI Providers
+### Available Providers:
 
-The app is configured to use **Google Gemini AI** by default. To switch to OpenAI:
-
-1. Open [App.jsx](src/App.jsx)
-2. Change the import on line 2:
-
-   ```javascript
-   // From:
+- **Google Gemini AI** - Fast, efficient responses with Gemini 2.0 Flash
+- **OpenAI** - GPT-4o-mini and other OpenAI models
+- **Anthropic Claude** - Advanced reasoning and analysis
+- **DeepSeek AI** - Cost-effective alternative
+- **X AI (Grok)** - Latest model from X.AIFrom:
    import { Assistant } from "./assistants/googleai.js";
 
    // To:
    import { Assistant } from "./assistants/openai.js";
-   ```
+```
 
 ## Project Structure
 
@@ -109,11 +121,18 @@ AI-ChatBot/
 ├── src/
 │   ├── assistants/
 │   │   ├── googleai.js      # Google Gemini AI integration
-│   │   └── openai.js        # OpenAI integration
+│   │   ├── openai.js        # OpenAI integration
+│   │   ├── anthropicai.js   # Anthropic Claude integration
+│   │   ├── deepseekai.js    # DeepSeek AI integration
+│   │   └── xai.js           # X AI (Grok) integration
 │   ├── components/
-│   │   ├── Chat/            # Chat message display component
+│   │   ├── Assistant/       # AI provider selector component
+│   │   ├── Chat/            # Main chat display component
 │   │   ├── Controls/        # Input controls component
-│   │   └── Loader/          # Loading indicator
+│   │   ├── Loader/          # Loading indicator
+│   │   ├── Messages/        # Message display with markdown
+│   │   ├── Sidebar/         # Chat history sidebar
+│   │   └── Theme/           # Theme switcher component
 │   ├── assets/              # Static assets
 │   ├── App.jsx              # Main app component
 │   ├── App.module.css       # App styles
@@ -128,7 +147,7 @@ AI-ChatBot/
 
 ## AI Assistant API
 
-Both assistant modules (`googleai.js` and `openai.js`) expose the same interface:
+All assistant modules expose a consistent interface:
 
 ### Constructor
 
@@ -136,9 +155,21 @@ Both assistant modules (`googleai.js` and `openai.js`) expose the same interface
 const assistant = new Assistant(model);
 ```
 
+### Properties
+
+- `name`: String identifier for the assistant provider
+
 ### Methods
 
-#### `chat(content, history?)`
+#### `createChat(history)`
+
+Create a new chat session with existing history.
+
+```javascript
+assistant.createChat(previousMessages);
+```
+
+#### `chat(content)`
 
 Send a message and get a complete response.
 
@@ -146,7 +177,7 @@ Send a message and get a complete response.
 const response = await assistant.chat("Hello!");
 ```
 
-#### `chatStream(content, history?)`
+#### `chatStream(content)`
 
 Send a message and receive a streaming response.
 
@@ -157,29 +188,36 @@ for await (const chunk of stream) {
 }
 ```
 
-## Known Issues
-
-⚠️ **Important Fix Required**: There's a typo in [googleai.js](src/assistants/googleai.js#L22). The method is named `chatSteam` but should be `chatStream`. Change line 22 from:
-
-```javascript
-async *chatSteam(content) {
-```
-
-to:
-
-```javascript
-async *chatStream(content) {
-```
-
 ## Features in Detail
+
+### Multi-Chat Sessions
+
+Create and manage multiple chat sessions simultaneously. Each chat maintains its own conversation history and can be accessed through the sidebar.
 
 ### Streaming Responses
 
 The app uses async generators to stream AI responses in real-time, providing a better user experience with immediate feedback.
 
-### Message Grouping
+### Message Rendering
 
-Messages are grouped by user/assistant pairs for better conversation flow visualization.
+Messages support full Markdown formatting including:
+
+- **Bold** and _italic_ text
+- Code blocks with syntax highlighting
+- Lists and tables
+- Links and images
+
+### Sidebar Navigation
+
+- Toggle sidebar with the menu button
+- View all active chat sessions
+- Create new chats
+- Switch between conversations
+- Each chat displays a preview of the first message
+
+### Theme Switching
+
+Toggle between light and dark modes to match your preference.
 
 ### Auto-scroll
 
@@ -205,4 +243,5 @@ This project is licensed under the MIT License.
 
 - Built with [React](https://react.dev/)
 - Powered by [Vite](https://vite.dev/)
-- AI by [Google Gemini](https://ai.google.dev/) and [OpenAI](https://openai.com/)
+- AI by [Google Gemini](https://ai.google.dev/), [OpenAI](https://openai.com/), [Anthropic](https://www.anthropic.com/), [DeepSeek](https://www.deepseek.com/), and [X AI](https://x.ai/)
+- Markdown rendering by [react-markdown](https://github.com/remarkjs/react-markdown)
