@@ -1,11 +1,12 @@
 import styles from "./Theme.module.css";
 
-export function Theme(){
-  function handleValueChange(event){
-    const meta = document.querySelector("meta[name=theme-color]").value;
-    meta.setAttribute("content", event.target.value )
+export function Theme() {
+  function handleValueChange(event) {
+    const meta = document.querySelector('meta[name="color-scheme"]');
+    meta.setAttribute("content", event.target.value);
   }
-  return(
+
+  return (
     <div className={styles.Theme}>
       <span>Theme:</span>
       <select defaultValue="light dark" onChange={handleValueChange}>
@@ -14,5 +15,5 @@ export function Theme(){
         <option value="dark">Dark</option>
       </select>
     </div>
-  )
+  );
 }

@@ -1,14 +1,29 @@
 import { GoogleGenAI } from "@google/genai";
 
 const googleai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
+  apiKey: import.meta.env.VITE_GOOGLE_AI_API_KEY,
 });
 
 export class Assistant {
   #chat;
+  name = "googleai";
+
   constructor(model = "gemini-2.0-flash") {
-    this.#chat = ai.chats.create({ model });
+    this.#chat = googleai.chats.create({ model });
   }
+
+  createChat(history) {
+    this.#chat = googleai.chats.create({
+      model: this.#chat.model,
+      history: history
+        .filter(({ role }) => role !== "system")
+        .map(({ content, role }) => ({
+          parts: [{ text: content }],
+          role: role === "assistant" ? "model" : role,
+        })),
+    });
+  }
+
   async chat(content) {
     try {
       const result = await this.#chat.sendMessage({ message: content });
@@ -32,13 +47,15 @@ export class Assistant {
 
   #parseError(error) {
     try {
-      const [, outerErrorJSON] = error.message?.split(" . ");
+      // Extract and parse the outer error JSON from the message string
+      const [, outerErrorJSON] = error?.message?.split(" . ");
       const outerErrorObject = JSON.parse(outerErrorJSON);
 
+      // Parse the nested stringified JSON from the outer error
       const innerErrorObject = JSON.parse(outerErrorObject?.error?.message);
 
       return innerErrorObject?.error;
-    } catch (error) {
+    } catch (parseError) {
       return error;
     }
   }

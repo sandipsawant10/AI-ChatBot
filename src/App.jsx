@@ -1,85 +1,87 @@
-import { useState } from "react";
-import { Assistant as AssistantClass } from "./assistants/deepseekai.js";
+import { useMemo, useState } from "react";
 import { Chat } from "./components/Chat/Chat.jsx";
 import { Assistant } from "./components/Assistant/Assistant.jsx";
-import { Controls } from "./components/Controls/Controls.jsx";
-import { Loader } from "./components/Loader/Loader.jsx";
+import { v4 as uuidv4 } from "uuid";
+import { Sidebar } from "./components/Sidebar/Sidebar.jsx";
 import { Theme } from "./components/Theme/Theme.jsx";
 import styles from "./App.module.css";
 
-  let assistant;
+const CHATS = [
+  {
+    id: 1,
+    title: "General Chat",
+    messages: [
+      {
+        role: "assistant",
+        content: "Hello! I am your AI ChatBot. How can I assist you today?",
+      },
+    ],
+  },
+  { id: 2, title: "Tech Support" },
+  { id: 3, title: "Random Talk" },
+];
 
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [assistant, setAssistant] = useState();
+  const [chats, setChats] = useState(CHATS);
+  const [activeChatId, setActiveChatId] = useState(2);
+  const activeChatMessages = useMemo(
+    () => chats.find(({ id }) => id === activeChatId)?.messages ?? [],
+    [activeChatId, chats],
+  );
 
-  function addMessage(message) {
-    setMessages((prevMessages) => [...prevMessages, message]);
+  function handleAssistantChange(newAssistant) {
+    setAssistant(newAssistant);
   }
 
-  function updateLastMessageContent(content) {
-    setMessages((prevMessages) =>
-      prevMessages.map((messages, index) =>
-        index === prevMessages.length - 1
-          ? { ...messages, content: `${messages.content}${content}` }
-          : messages,
+  function handleChatMessagesUpdate(messages) {
+    setChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.id === activeChatId ? { ...chat, messages } : chat,
       ),
     );
   }
 
-  async function handleContentSend(content) {
-    addMessage({ role: "user", content });
-    setIsLoading(true);
-    try {
-      const result = await assistant.chatStream(
-        content,
-        messages.filter(({ role }) => role !== "system"),
-      );
-      let isFirstChunk = false;
+  function handleNewChatCreate() {
+    const id = uuidv4();
 
-      for await (const chunk of result) {
-        if (!isFirstChunk) {
-          isFirstChunk = true;
-          addMessage({ role: "assistant", content: "" });
-          setIsLoading(false);
-          setIsStreaming(true);
-        }
-        updateLastMessageContent(chunk);
-      }
-      setIsStreaming(false);
-    } catch (error) {
-      addMessage({
-        role: "system",
-        content:
-          error?.message ?? "Error occurred while processing your request.",
-      });
-      setIsLoading(false);
-      setIsStreaming(false);
-    }
-  }
-
-  function handleAssistantChange(newAssistant) {
-    assistant = newAssistant;
+    setActiveChatId(id);
+    setChats((prevChats) => [
+      ...prevChats,
+      {
+        id,
+        title: `New Chat`,
+        messages: [],
+      },
+    ]);
   }
 
   return (
     <div className={styles.App}>
-      {isLoading && <Loader />}
       <header className={styles.Header}>
         <img className={styles.Logo} src="/chat-bot.png" alt="logo" />
         <h2 className={styles.Title}>AI ChatBot</h2>
       </header>
-      <div className={styles.ChatContainer}>
-        <Chat messages={messages} />
-      </div>
-      <Controls
-        isDisabled={isLoading || isStreaming}
-        onSend={handleContentSend}
-      />
-      <div className={styles.Configuration}>
-      <Assistant onAssistantChange={handleAssistantChange} />
-      <Theme />
+      <div className={styles.Content}>
+        <Sidebar
+          chats={chats}
+          activeChatId={activeChatId}
+          onActiveChatIdChange={setActiveChatId}
+          onNewChatCreate={handleNewChatCreate}
+        />
+
+        <main className={styles.Main}>
+          <Chat
+            assistant={assistant}
+            chatId={activeChatId}
+            chatMessages={activeChatMessages}
+            onChatMessagesUpdate={handleChatMessagesUpdate}
+          />
+          <div className={styles.Configuration}>
+            <Assistant onAssistantChange={handleAssistantChange} />
+            <Theme />
+          </div>
+        </main>
       </div>
     </div>
   );
