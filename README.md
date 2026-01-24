@@ -18,7 +18,7 @@ A modern, real-time AI chatbot application built with React and Vite, supporting
 ## Tech Stack
 
 - **Frontend**: React 19.2
-- **Build Tool**: Vite (Rolldown)
+- **Build Tool**: Vite
 - **AI Services**:
   - Google Generative AI (Gemini 2.0 Flash)
   - OpenAI (GPT-4o-mini and other models)
